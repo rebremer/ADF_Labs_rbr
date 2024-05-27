@@ -1,0 +1,384 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "demo-adfmovie-adf"
+		},
+		"ADLS_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ADLS'"
+		},
+		"AzureSQL_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSQL'"
+		},
+		"ADLS_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://demoadfstormoviev2.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/MoviePipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyDataToADLS",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "MoviesSource",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "MoviesADLSSink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "AggregateData",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "CopyDataToADLS",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"MoviesADLS": {},
+									"SQLSink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-05-24T14:22:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/MoviesSource')]",
+				"[concat(variables('factoryId'), '/datasets/MoviesADLSSink')]",
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MoviesADLSSink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ADLS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "output",
+						"fileSystem": "sample-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ADLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MoviesSource')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BLOB",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "moviesDB.csv",
+						"folderPath": "input",
+						"container": "sample-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "movie",
+						"type": "String"
+					},
+					{
+						"name": "title",
+						"type": "String"
+					},
+					{
+						"name": "genres",
+						"type": "String"
+					},
+					{
+						"name": "year",
+						"type": "String"
+					},
+					{
+						"name": "Rating",
+						"type": "String"
+					},
+					{
+						"name": "Rotton Tomato",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BLOB')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SQLSink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "MovieAnalytics"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ADLS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ADLS_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ADLS_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSQL')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSQL_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BLOB')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"containerUri": "https://demoadfstormoviev2.blob.core.windows.net/sample-data",
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "MoviesADLSSink",
+								"type": "DatasetReference"
+							},
+							"name": "MoviesADLS"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "SQLSink",
+								"type": "DatasetReference"
+							},
+							"name": "SQLSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectAndRename"
+						},
+						{
+							"name": "FilterYearsBefore1950"
+						},
+						{
+							"name": "RankMoviesByRatings"
+						},
+						{
+							"name": "DerivePrimaryGenre"
+						},
+						{
+							"name": "AggregateRatings"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          movie as integer,",
+						"          title as string,",
+						"          genres as string,",
+						"          year as short,",
+						"          Rating as short,",
+						"          {Rotton Tomato} as short",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> MoviesADLS",
+						"MoviesADLS select(mapColumn(",
+						"          movie,",
+						"          title,",
+						"          genres,",
+						"          year,",
+						"          {Rotten Tomato} = {Rotton Tomato}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectAndRename",
+						"SelectAndRename filter(year > 1950) ~> FilterYearsBefore1950",
+						"DerivePrimaryGenre window(over(PrimaryGenre,",
+						"          year),",
+						"     asc({Rotten Tomato}, true),",
+						"     RatingRank = rank()) ~> RankMoviesByRatings",
+						"FilterYearsBefore1950 derive(PrimaryGenre = split(genres, '|')[1]) ~> DerivePrimaryGenre",
+						"RankMoviesByRatings aggregate(groupBy(PrimaryGenre,",
+						"          year),",
+						"     AverageRating = avg({Rotten Tomato}),",
+						"          HighestRated = first(title),",
+						"          LowestRated = last(title),",
+						"          NumberOfMovies = count()) ~> AggregateRatings",
+						"AggregateRatings sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> SQLSink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/MoviesADLSSink')]",
+				"[concat(variables('factoryId'), '/datasets/SQLSink')]"
+			]
+		}
+	]
+}
