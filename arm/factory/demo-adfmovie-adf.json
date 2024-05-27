@@ -1,13 +1,5 @@
 {
 	"name": "demo-adfmovie-adf",
-	"properties": {
-		"globalParameters": {
-			"storage_source": {
-				"type": "string",
-				"value": "123"
-			}
-		}
-	},
 	"location": "swedencentral",
 	"identity": {
 		"type": "SystemAssigned",
