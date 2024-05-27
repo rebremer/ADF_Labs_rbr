@@ -1,0 +1,87 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "MoviesADLSSink",
+						"type": "DatasetReference"
+					},
+					"name": "MoviesADLS"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "SQLSink",
+						"type": "DatasetReference"
+					},
+					"name": "SQLSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectAndRename"
+				},
+				{
+					"name": "FilterYearsBefore1950"
+				},
+				{
+					"name": "RankMoviesByRatings"
+				},
+				{
+					"name": "DerivePrimaryGenre"
+				},
+				{
+					"name": "AggregateRatings"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          movie as integer,",
+				"          title as string,",
+				"          genres as string,",
+				"          year as short,",
+				"          Rating as short,",
+				"          {Rotton Tomato} as short",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> MoviesADLS",
+				"MoviesADLS select(mapColumn(",
+				"          movie,",
+				"          title,",
+				"          genres,",
+				"          year,",
+				"          {Rotten Tomato} = {Rotton Tomato}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectAndRename",
+				"SelectAndRename filter(year > 1950) ~> FilterYearsBefore1950",
+				"DerivePrimaryGenre window(over(PrimaryGenre,",
+				"          year),",
+				"     asc({Rotten Tomato}, true),",
+				"     RatingRank = rank()) ~> RankMoviesByRatings",
+				"FilterYearsBefore1950 derive(PrimaryGenre = split(genres, '|')[1]) ~> DerivePrimaryGenre",
+				"RankMoviesByRatings aggregate(groupBy(PrimaryGenre,",
+				"          year),",
+				"     AverageRating = avg({Rotten Tomato}),",
+				"          HighestRated = first(title),",
+				"          LowestRated = last(title),",
+				"          NumberOfMovies = count()) ~> AggregateRatings",
+				"AggregateRatings sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> SQLSink"
+			]
+		}
+	}
+}

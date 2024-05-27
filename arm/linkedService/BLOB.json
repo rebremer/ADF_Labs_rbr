@@ -1,0 +1,12 @@
+{
+	"name": "BLOB",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"containerUri": "https://demoadfstormoviev2.blob.core.windows.net/sample-data",
+			"authenticationType": "Anonymous"
+		}
+	}
+}

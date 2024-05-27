@@ -1,0 +1,9 @@
+{
+	"name": "demo-adfmovie-adf",
+	"location": "swedencentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "c1568138-286f-477f-aba3-0da0646361c3",
+		"tenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3"
+	}
+}

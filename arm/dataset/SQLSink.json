@@ -1,0 +1,17 @@
+{
+	"name": "SQLSink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "MovieAnalytics"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
