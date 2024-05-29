@@ -3,7 +3,7 @@
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"factoryName": {
-			"value": "demo-adfmovie-adf"
+			"value": "<<your adf name>>"
 		},
 		"ADLS_accountKey": {
 			"value": ""
@@ -12,7 +12,7 @@
 			"value": ""
 		},
 		"ADLS_properties_typeProperties_url": {
-			"value": "https://demoadfstormoviev2.dfs.core.windows.net/"
+			"value": "https://<<your adls account>>.dfs.core.windows.net/"
 		}
 	}
 }

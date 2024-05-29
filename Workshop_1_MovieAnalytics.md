@@ -63,7 +63,7 @@ Once your data factory is created and you open the ADF UX, the first step in you
     ![Authoring](./new_images_rbr/1_azure_blob_storage_dataset.png)
     1. In the file format list, select the DelimitedText format tile and click continue
     ![Authoring](./assets/MovieAnalytics/authoring6.png)
-    1. In Set Properties sidenav, give your dataset an understandable name and click on the Linked Service dropdown. If you have not created your Azure Storage Linked Service, select 'New'. Data will be fetched from a public storage account. As authentication type, select "Anonymous" and as URL take `https://demoadfstormoviev2.blob.core.windows.net/sample-data`
+    1. In Set Properties sidenav, give your dataset an understandable name and click on the Linked Service dropdown. If you have not created your Azure Storage Linked Service, select 'New'. Data will be fetched from a public storage account. As authentication type, select "Anonymous" and as URL take `https://demoadfstormoviev3.blob.core.windows.net/sample-data`
     ![Authoring](./new_images_rbr/2_azure_blob_storage_linked_service.png)
     a. Once you have created and selected the linked service, specify the rest of your dataset settings. These settings specify how and where in your connection we want to pull the data. In the below image, the configuration is reading a delimited text file named `moviesDB.csv` in a container named `sample-data` and a folder named `input`. The file has a header which is why `first row as header` is enabled. This lab is getting the schema directly from the connection. Click finish once completed.
     ![Authoring](./new_images_rbr/3_blob_data_set_path.png)

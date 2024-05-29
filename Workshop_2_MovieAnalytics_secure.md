@@ -1,17 +1,17 @@
 # Workshop 2: Secure Movie analytics pipeline
 
-*Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md *
+* Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
 
-*If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).*
+* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction). *
 
 In this Lab, you will enhance workshop 1: MovieAnalytics in which Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
 
 In this workshop, this pipeline will be secured. The following steps are taken:
 
 
-- **Authentication** - Authorization: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys
+- **Authentication/authorization**: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys
 - **Networking**: Connect to Storage account and Azure SQL using private endpoints rather than public internet
-- **Parametrisation**: Parameterize pipeline to facilitate unit testing and deployment to dev/tst/prd
+- **Parametrization**: Parameterize pipeline to facilitate unit testing and deployment to dev/tst/prd
 
 ## Prerequisites
 
@@ -96,14 +96,89 @@ In the detailed view, you can see how long each transformation stage takes, view
 The data flow activity should complete in about one minute. If you used the same logic described in this lab, your Data Flow should will written 737 rows to your Azure SQL Database. You can go into [SQL Server Management Studio](https://docs.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-2017) to verify the pipeline worked correctly and see what got written.
 
 
-## Authentication - Authorization: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys##
+## Authentication/Authorization: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys##
 
-<<todo>>
+1. Go to your Azure Storage account that you deployed. Select **Access Control (IAM)** , select the role `Storage Blob Data Contributor` and move to the next pane. Select  `Managed Identity` and then look up the Azure Data Factory to which you deployed the VNET.
+
+![Managed Identity](./new_images_rbr/105_Storage_MI.png "Storage Managed Identity")
+
+Then click `save` and verify that ADF managed identity was added as Storage Blob Data Contributor on the storage account
+
+1. Go to your Azure Data Factory, select the ADLS linked service and change **Authentication Type** to **System Assigned Managed Identity**. Then this the connection (make sure that you have interactive auditing enabled on Managed VNET) 
+
+![Managed Identity](./new_images_rbr/106_ADF_storage_MI.png "Storage Managed Identity ADF").
+
+1. Go to your Azure SQL Database that you deployed. You can go into [SQL Server Management Studio](https://docs.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-2017) and login to your database. Notice that you should log in using the Azure AD Identity since the ADF MI will be added and this can only be done from another Azure AD user (and not via a user that authenticated via local SQL authentication)
+
+![SQL Login](./new_images_rbr/108_Azure_SQL_AAD.png "SQL Login")
+
+1. Go to database that you deployed earlier and select **New Query**. The run the following script:
+
+```
+CREATE USER [<<Azure Data Factory Name>>] FROM EXTERNAL PROVIDER;
+EXEC sp_addrolemember [db_datawriter], [<<Azure Data Factory Name>>]
+```
+
+1. Go to your Azure Data Factory, select the Azure SQL linked service and change **Authentication Type** to **System Assigned Managed Identity**. Then this the connection (make sure that you have interactive auditing enabled on Managed VNET)
+
+![Managed Identity](./new_images_rbr/109_Azure_SQL_Linked_service.png "Storage Managed Identity ADF").
+
+1. Click on save and then publish all changes.
+
+![Managed Identity](./new_images_rbr/110_ADF_Publish_changes.png "Storage Managed Identity ADF").
+
+After the pipeline was published, all authentication is done via Managed Identities. That is, no credentials are needed anymore that shall be managed by the customer.
+
 
 ## Networking - Connect to Storage account and Azure SQL using private endpoints rather than public internet
 
-<<todo>>
+1. Go to your Azure Data Factory, select the **Managed private endpoints** and select **Azure Data Lake Storage Gen 2** and the select the ADLSgen2 account that you created. 
+
+![PE](./new_images_rbr/111_ADF_ADLS_PE.png "Storage PE").
+
+1. After PE, you PE on the storage account is pending. This is because the PE needs to be approved (it is not possible to just create private endpoints to any service in the enterprise). 
+
+![PE](./new_images_rbr/112_ADF_ADLS_PE_pending.png "Storage PE pending").
+
+1. Go to storage account and then approve the private endpoint
+
+![PE](./new_images_rbr/113_ADF_ADLS_PE_approved.png "Storage PE approved").
+
+1. Since ADF managed VNET can now access the storage account via its private endpoint, the storage account can be disabled from public access. Go th
+
+![PE](./new_images_rbr/114_ADF_ADLS_disable_public_access.png "Storage PE approved").
+
+1. The steps for ADLSgen2 are now completed. You will notice that you can lookup your data anymore in your ADLSgen2 in the Azure Portal, you will need to have connectivity to the Azure Storage account, for instance, via the managed VNET of ADF.
+
+1. The same steps will now be executed for Azure SQL. Create an private endpoint request to Azure SQL from ADF, approve request in Azure SQL and then disable public access in Azure SQL. Azure SQL dataa cannot be accessed anymore from SSMS on your laptop, unless your laptop has access to the Azure SQL environment.
+
+
+![PE](./new_images_rbr/115_ADF_ADLS_all_PEs_approved.png "Storage PE approved").
+
+
+1. After all private endpoints are created and deployed, pipeline can run. Pipeline is now enhanced such that no credentials are needed to connect to data sources and data sources do not have to be exposed to the public interne
 
 ## Parametrisation - Parameterize pipeline to facilitate unit testing and deployment to dev/tst/prd
 
-<<todo>>
+1. Next step is to parameterize the data sources. This will make it easier to deploy ADF to dev/tst/prd environments and configure data sources accordingly. In this case, the public data source that is used to fetch the movie data will be parameterized. Firstly, create a global parameter that contains the public data source.
+
+![Parameter](./new_images_rbr/116_global_parameter_blob.png "Global parameter").
+
+1. The value of this parameter needs to be propagated all the way through the linked service. Therefore, create a local parameter at the linked service.
+
+![Parameter](./new_images_rbr/117_local_parameter_ls.png "Local parameter Linked Service").
+
+1. Similarly, create a local parameter at the data set that is used by the blob linked service.
+
+![Parameter](./new_images_rbr/118_local_parameter_ds.png "Local parameter Dataset").
+
+1. The value of the dataset local parameter shall be used in the local parameter that is passed into the linked service.
+
+![Parameter](./new_images_rbr/119_local_parameter_ds_value.png "Local parameter Dataset value").
+
+1. Finally, the value of the global parameter shall be used in the local parameter of the dataset that is eventually passed to the linked service.
+
+![Parameter](./new_images_rbr/119_local_parameter_ds_value.png "Global parameter Dataset value").
+
+
+Publish all changed and you can run pipeline again. It is now easy to substitute the ADF pipeline from a public source to an internal source.
