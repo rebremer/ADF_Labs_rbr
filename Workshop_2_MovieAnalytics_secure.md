@@ -1,10 +1,6 @@
 # Workshop 2: Secure Movie analytics pipeline
 
-* Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
-
-* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).
-
-In this Lab, you will enhance workshop 1: MovieAnalytics in which Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
+In this Lab, you will enhance [workshop 1: MovieAnalytics](./Workshop_1_MovieAnalytics.md) in which Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
 
 In this workshop, this pipeline will be secured. The following steps are taken:
 
