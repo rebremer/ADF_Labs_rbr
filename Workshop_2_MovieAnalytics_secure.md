@@ -2,7 +2,7 @@
 
 * Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
 
-* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction). *
+* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).
 
 In this Lab, you will enhance workshop 1: MovieAnalytics in which Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
 
@@ -12,6 +12,7 @@ In this workshop, this pipeline will be secured. The following steps are taken:
 - **Authentication/authorization**: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys
 - **Networking**: Connect to Storage account and Azure SQL using private endpoints rather than public internet
 - **Parametrization**: Parameterize pipeline to facilitate unit testing and deployment to dev/tst/prd
+- **Data Exfiltration Protection**: Whitelist domains that ADF can use to communicate
 
 ## Prerequisites
 
@@ -182,3 +183,35 @@ After the pipeline was published, all authentication is done via Managed Identit
 
 
 Publish all changed and you can run pipeline again. It is now easy to substitute the ADF pipeline from a public source to an internal source.
+
+## Data Exfiltration Protection: Whitelist domains that ADF can use to communicate
+
+1. Go to your Azure Data Factory, select the **Manage** and select **Outbound rules** and then enable option **Use Azure Policy (preview)**.
+
+![Exfiltration](./new_images_rbr/121_Azure_policy_ADF.png "Exfiltration").
+
+1. Go to [Azure policies examples for ADF](https://learn.microsoft.com/en-us/azure/data-factory/policy-reference) and select the first policies **Azure Data Factory pipelines should only communicate with allowed domains**. Deploy this policies in your own environment that you scope to your own subscription and own resource group. As an example, use **www.google.com** as allowed domain.
+
+![Exfiltration](./new_images_rbr/122_Azure_policy_allowed_domain.png "Exfiltration").
+
+1. Go to your ADF pipeline and run the pipeline again. It will fail since ADF tries to fetch data from a domain that was not whitelisted. Notice that technically moviede data is retrieved from an external domain and not exfiltratrated, but for ADF this is just connecting to an external domain.
+
+![Exfiltration](./new_images_rbr/123_ADF_failed_pipeline.png "Exfiltration").
+
+1. Add the domain **demoadfstormoviev3.blob.core.windows.net** to your domain and run pipeline again. There are two other domains that need to be whitelisted (your storage, your SQL). When all domains are whitelisted, pipeline can run succesfully again
+
+![Exfiltration](./new_images_rbr/124_secured_pipeline.png "Exfiltration").
+
+In four steps, the pipeline was secured as follows:
+
+- **Authentication/authorization**: Connect to Storage account and Azure SQL using System Assigned Managed Identities rather than keys
+- **Networking**: Connect to Storage account and Azure SQL using private endpoints rather than public internet
+- **Parametrization**: Parameterize pipeline to facilitate unit testing and deployment to dev/tst/prd
+- **Data Exfiltration Protection**: Whitelist domains that ADF can use to communicate
+
+As a follow-up, the data factory pipeline can be further secured using Azure DevOps dev/tst/prd environment and unit testing. This is dicussed in blogs below:
+
+- https://towardsdatascience.com/how-to-manage-azure-data-factory-from-dev-to-prd-ab7c8a2d10ae
+- https://towardsdatascience.com/how-to-build-unit-tests-for-azure-data-factory-3aa11b36c7af
+- https://towardsdatascience.com/how-to-bring-your-modern-data-pipeline-to-production-2f14e42ac200
+- https://towardsdatascience.com/how-to-connect-azure-ad-managed-identities-to-aws-resources-9353f3309efb

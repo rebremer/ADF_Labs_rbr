@@ -1,8 +1,8 @@
 # Workshop 1: Movies Analytics using Azure Data Factory
 
-*Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md *
+* Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
 
-*If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).*
+* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).
 
 In this Lab, you will utilize Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
 
