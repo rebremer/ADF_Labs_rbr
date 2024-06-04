@@ -1,16 +1,13 @@
 # Workshop 3: Movies Analytics using Azure Data Factory - integrated
 
-* Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
+In this Lab, you will utilize Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored on a public storage account into an ADLSgen2 storage account in your own subscription and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database. The transformation can be described as followed:
+- Raw movie data is ingested into your own ADLSgen2 account
+- Data is cleansed, filter and aggregated to make it ready for a consumption
+- Data is eventually stored in an Azure SQL database where it can be exposed to build APIs, reports
 
-* If you're new to Azure Data Factory, see [Introduction to Azure Data Factory](https://docs.microsoft.com/azure/data-factory/introduction).
+The patterns corresponds with a [medaillion lakehouse architecture](https://learn.microsoft.com/en-us/azure/databricks/lakehouse/medallion). 
 
-In this Lab, you will utilize Azure Data Factory's visual authoring experience to create a pipeline that copies movie data stored in Azure Data Lake Storage Gen2 to a separate location in that storage account and then executes a Mapping Data Flow to transform and write the data to a Azure SQL Database.
-
-The patterns used in this lab are examples of a modern data warehouse ingestion and transformation scenario using Azure Data Factory.
-
-The a similar pipeline to the one created in this lab is available via the Azure Data Factory [Template Gallery](https://azure.microsoft.com/blog/get-started-quickly-using-templates-in-azure-data-factory/) under the name **Movie Analytics**
-
-Please allot about two hours to complete this lab end to end.
+Please allot about two hours to complete this lab end to end. Workshop cloned and enhanced originally from https://github.com/djpmsft/ADF_Labs/blob/master/MovieAnalytics_ADLS.md
 
 ## Prerequisites
 
@@ -63,13 +60,10 @@ Once your data factory is created and you open the ADF UX, the first step in you
     ![Authoring](./new_images_rbr/1_azure_blob_storage_dataset.png)
     1. In the file format list, select the DelimitedText format tile and click continue
     ![Authoring](./assets/MovieAnalytics/authoring6.png)
-    1. In Set Properties sidenav, give your dataset an understandable name and click on the Linked Service dropdown. If you have not created your Azure Storage Linked Service, select 'New'. Data will be fetched from a public storage account. As authentication type, select "Anonymous" and as URL take 
-
-
-    # `https://demoadfstormoviev3.blob.core.windows.net/sample-data`
-
-
-
+    1. In Set Properties sidenav, give your dataset an understandable name and click on the Linked Service dropdown. If you have not created your Azure Storage Linked Service, select 'New'. Data will be fetched from a public storage account. As authentication type, select "Anonymous" and as URL take: 
+      - `https://demoadfstormoviev3.blob.core.windows.net/sample-data`
+      -  **Also, make sure you know what integration runtime to connect to.**
+    <br />
     ![Authoring](./new_images_rbr/2_azure_blob_storage_linked_service.png)
     a. Once you have created and selected the linked service, specify the rest of your dataset settings. These settings specify how and where in your connection we want to pull the data. In the below image, the configuration is reading a delimited text file named `moviesDB.csv` in a container named `sample-data` and a folder named `input`. The file has a header which is why `first row as header` is enabled. This lab is getting the schema directly from the connection. Click finish once completed.
     ![Authoring](./new_images_rbr/3_blob_data_set_path.png)
@@ -82,8 +76,15 @@ Once your data factory is created and you open the ADF UX, the first step in you
     ![Authoring](./assets/MovieAnalytics/authoring15.png)
     1. Select the DelimitedText format tile and click continue
     ![Authoring](./assets/MovieAnalytics/authoring6.png)
-    1. In the Set Properties sidenav, give your dataset an understandable name and create a new `ADLS` linked service. Set  **Authentication Type** to **System Assigned Managed Identity**. Then this the connection (make sure that you have interactive auditing enabled on Managed VNET). **Make sure you know what storage account and what container to connect to.**
-
+    1. In the Set Properties sidenav, give your dataset an understandable name and create a new `ADLS` linked service. Set  **Authentication Type** to **System Assigned Managed Identity**. Then this the connection (make sure that you have interactive auditing enabled on Managed VNET). Two additional remarks:
+    <br />
+    <br />
+    <br />
+    - **Make sure you know what storage account and what container to connect to.**
+    - **Make sure you know what integration runtime to use.**
+    <br />
+    <br />
+    <br />
     ![Managed Identity](./new_images_rbr/106_ADF_storage_MI.png "Storage Managed Identity ADF").
 
      As you are writing to this dataset, you want to point the folder and file where you want moviesDB.csv copied to. In the example below, I am writing to the file 'moviesDB.csv' in the folder 'output' in the container 'sample-data'. While the folder and file can be dynamically created, the container must exist prior to writing to it. Set First row as header to be true. If you do not specify this setting, your data will be written without a header which can provide issues later in the lab. Do not specify a schema at this time. Click finish once completed.
@@ -247,16 +248,13 @@ Now that you have moved the data into ADLS, you are ready to build a Mapping Dat
 
     ![Managed Identity](./new_images_rbr/109_Azure_SQL_Linked_service.png "Storage Managed Identity ADF").
 
-
-    ![derive](./new_images_rbr/7_Azure_SQL_Database_linked_service.png "derive")
-
     In the Set properties pane, select **Create new table**. Enter in `dbo` for your schema name and `MovieAnalytics` for your table name. Click OK when finished. Make sure that you know hwat 
 
-    ![derive](./new_images_rbr/8_Azure_SQL_Database_new_table "derive")
+    ![derive](./new_images_rbr/8_Azure_SQL_Database_new_table.png "derive")
 
     Your Azure SQL sink is now fully configured.
 
-    ![derive](./new_images_rbr/9_Azure_SQL_Database_dataflows_sink "derive")
+    ![derive](./new_images_rbr/9_Azure_SQL_Database_dataflows_sink.png "derive")
 
 At this point, You have finished building your 7 transformation Mapping Data Flow. It's time to run the pipeline and see the results!
 
